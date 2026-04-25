@@ -17,6 +17,10 @@ def get_db():
             print(f"Error initializing Firebase Admin SDK: {e}")
             raise e
     
-    return firestore.client()
+    try:
+        return firestore.client()
+    except Exception as e:
+        print(f"Warning: Could not initialize Firestore client (this is expected during deployment analysis): {e}")
+        return None
 
 db = get_db()
