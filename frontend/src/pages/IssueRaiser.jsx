@@ -97,16 +97,21 @@ export default function IssueRaiser() {
                 placeholder="Full name"
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Phone Number *</label>
-              <input 
-                className="form-input" 
-                required 
-                value={form.phone}
-                onChange={e => setForm({...form, phone: e.target.value})}
-                placeholder="For rescue contact"
-              />
-            </div>
+              <div className="form-group">
+                <label>Phone Number *</label>
+                <input
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onKeyPress={(e) => {
+                    if (!/[0-9+]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  required
+                />
+              </div>
           </div>
 
           <div className="form-group">
