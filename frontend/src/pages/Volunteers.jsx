@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc } from '
 
 const SKILL_OPTIONS = ['medical','driving','logistics','IT','coordination','community-outreach','translation','first-aid','pediatrics','data-analysis','python','emergency'];
 
-export default function Volunteers() {
+export default function Volunteers({ userRole }) {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -31,28 +31,53 @@ export default function Volunteers() {
   }
 
   async function saveVolunteer() {
-    if (!form.name && !form.full_name) return;
-    setSaving(true);
+    console.log("Attempting to register volunteer with form:", form);
     const displayName = form.name || form.full_name;
-    await addDoc(collection(db, 'volunteers'), {
-      name: displayName,
-      full_name: displayName,
-      phone: form.phone,
-      email: form.email,
-      location_name: form.location_name,
-      skills: form.skills,
-      role: form.role,
-      languages: form.languages,
-      availability_status: 'available',
-      churn_risk_score: 0,
-      sentiment_score: 0.75,
-      tasks_completed: 0,
-      last_active_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
-    });
-    setSaving(false);
-    setShowModal(false);
-    setForm({ name: '', full_name: '', phone: '', email: '', location_name: '', skills: [], role: 'volunteer', languages: ['english'] });
+    
+    // Strict Validation
+    if (!displayName) {
+      alert("⚠️ Please enter a Full Name before registering.");
+      return;
+    }
+    const phoneRegex = /^[0-9+]{10,15}$/;
+    if (!phoneRegex.test(form.phone)) {
+      alert("⚠️ Please enter a valid phone number (10-15 digits).");
+      return;
+    }
+    if ((form.location_name || '').trim().length < 3) {
+      alert("⚠️ Please enter a specific location.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const volunteerData = {
+        name: displayName,
+        full_name: displayName,
+        phone: form.phone,
+        email: form.email,
+        location_name: form.location_name,
+        skills: form.skills,
+        role: form.role,
+        languages: form.languages,
+        availability_status: 'available',
+        churn_risk_score: 0,
+        sentiment_score: 0.75,
+        tasks_completed: 0,
+        last_active_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      };
+      console.log("Sending to Firestore:", volunteerData);
+      await addDoc(collection(db, 'volunteers'), volunteerData);
+      setShowModal(false);
+      setForm({ name: '', full_name: '', phone: '', email: '', location_name: '', skills: [], role: 'volunteer', languages: ['english'] });
+      alert("✅ Volunteer registered successfully!");
+    } catch (error) {
+      console.error("Firestore Error:", error);
+      alert(`❌ Registration failed: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function updateStatus(id, status) {
@@ -75,7 +100,7 @@ export default function Volunteers() {
           <h2 className="page-title">👥 Volunteers</h2>
           <p className="page-subtitle">{volunteers.length} registered · {volunteers.filter(v => v.availability_status === 'available').length} available (Firebase)</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Register Volunteer</button>
+        <button className="btn btn-primary" onClick={() => { console.log("Register Volunteer clicked"); setShowModal(true); }}>+ Register Volunteer</button>
       </div>
 
 
@@ -219,7 +244,7 @@ export default function Volunteers() {
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={saveVolunteer} disabled={saving || (!form.name && !form.full_name)}>
+                <button className="btn btn-primary" onClick={saveVolunteer}>
                   {saving ? '⏳ Saving...' : '✅ Register'}
                 </button>
               </div>

@@ -70,15 +70,17 @@ export default function Dashboard({ setCurrentPage, userRole }) {
 
   useEffect(() => {
     // Realtime subscriptions
-    const qTasks = query(collection(db, 'tasks'), orderBy('created_at', 'desc'), limit(50));
-    const unsubscribeTasks = onSnapshot(qTasks, (snapshot) => {
+    const qTasksAll = query(collection(db, 'tasks'));
+    const unsubscribeTasks = onSnapshot(qTasksAll, (snapshot) => {
       const allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTasks(allTasks.slice(0, 5));
+      // Sort for "Recent" display separately
+      const sorted = [...allTasks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setTasks(sorted.slice(0, 5));
       setMetrics(prev => ({
         ...prev,
         tasks: allTasks.length,
         pending: allTasks.filter(t => t.status === 'pending').length,
-        my_tasks: allTasks.filter(t => t.status === 'in_progress').length // Simulating "My Tasks"
+        my_tasks: allTasks.filter(t => t.status === 'in_progress').length
       }));
     });
     // ... (rest of useEffect logic remains similar)
@@ -97,11 +99,11 @@ export default function Dashboard({ setCurrentPage, userRole }) {
       setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    const qHope = query(collection(db, 'hope_scores'), orderBy('score_date', 'asc'), limit(7));
+    const qHope = query(collection(db, 'hope_scores'), orderBy('score_date', 'asc'));
     const unsubscribeHope = onSnapshot(qHope, (snapshot) => {
       const allHope = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setHopeScores(allHope.map(h => ({ date: h.score_date, score: h.score, sentiment: Math.round(h.avg_sentiment * 100) })));
-      setHopeLatest(allHope[allHope.length - 1]);
+      setHopeLatest(allHope.length > 0 ? allHope[allHope.length - 1] : null);
     });
 
     const qSOS = query(

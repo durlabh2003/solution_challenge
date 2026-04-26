@@ -16,16 +16,45 @@ export default function IssueRaiser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Strict Validation
+    const phoneRegex = /^[0-9+]{10,15}$/;
+    if (!phoneRegex.test(form.phone)) {
+      alert("Please enter a valid phone number (10-15 digits).");
+      return;
+    }
+    if (form.location.trim().length < 3) {
+      alert("Please enter a specific incident location.");
+      return;
+    }
+
     setLoading(true);
     try {
+      const reportTitle = `SOS: ${form.issue_type.toUpperCase()} - ${form.location}`;
+      
+      // 1. Create Field Report (for tracking history)
       await addDoc(collection(db, 'field_reports'), {
         ...form,
-        title: `SOS: ${form.issue_type.toUpperCase()} - ${form.location}`,
+        title: reportTitle,
         status: 'pending',
         created_at: serverTimestamp(),
         created_from: 'sos_portal',
         urgency_level: form.urgency
       });
+
+      // 2. Create Task (so it reflects on Dashboard and Taskboard)
+      await addDoc(collection(db, 'tasks'), {
+        title: reportTitle,
+        description: `SOS Portal Request from ${form.name}: ${form.description}`,
+        location: form.location,
+        priority: form.urgency === 'critical' ? 'high' : 'medium',
+        status: 'pending',
+        created_at: serverTimestamp(),
+        created_from: 'sos_portal',
+        contact_name: form.name,
+        contact_phone: form.phone
+      });
+
       setSubmitted(true);
     } catch (error) {
       console.error("SOS Submission failed:", error);

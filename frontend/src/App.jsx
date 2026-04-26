@@ -27,9 +27,8 @@ export default function App() {
     // 1. SOS Alerts Listener
     const qSOS = query(
       collection(db, 'field_reports'), 
-      where('urgency_level', 'in', ['critical', 'high']),
       orderBy('created_at', 'desc'),
-      limit(10)
+      limit(20)
     );
     const unsubscribeSOS = onSnapshot(qSOS, (snapshot) => {
       setSosAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));

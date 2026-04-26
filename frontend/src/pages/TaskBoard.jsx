@@ -6,7 +6,7 @@ const STATUS_ORDER = ['pending', 'assigned', 'in_progress', 'completed'];
 const STATUS_LABELS = { pending: '⏳ Pending', assigned: '📡 Assigned', in_progress: '🔄 In Progress', completed: '✅ Completed' };
 const TYPE_EMOJI = { water: '💧', food: '🍛', medical: '🏥', logistics: '🚛', shelter: '⛺', other: '📋' };
 
-export default function TaskBoard() {
+export default function TaskBoard({ userRole }) {
   const [tasks, setTasks] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [filter, setFilter] = useState('all');
@@ -35,18 +35,35 @@ export default function TaskBoard() {
   }, []);
 
   async function createTask() {
-    if (!form.title) return;
+    console.log("Attempting to create task with form:", form);
+    if (!form.title || form.title.trim().length < 5) {
+      alert("⚠️ Please enter a descriptive Task Title (min 5 chars).");
+      return;
+    }
+    if (!form.location_name || form.location_name.trim().length < 3) {
+      alert("⚠️ Please enter a specific Location Name (min 3 chars).");
+      return;
+    }
     setSaving(true);
-    await addDoc(collection(db, 'tasks'), {
-      ...form,
-      status: 'pending',
-      created_from: 'manual',
-      ai_confidence: 1.0,
-      created_at: new Date().toISOString()
-    });
-    setSaving(false);
-    setShowModal(false);
-    setForm({ title: '', description: '', task_type: 'water', urgency_level: 'high', urgency_score: 7, location_name: '', quantity: '' });
+    try {
+      const taskData = {
+        ...form,
+        status: 'pending',
+        created_from: 'manual',
+        ai_confidence: 1.0,
+        created_at: new Date().toISOString()
+      };
+      console.log("Sending to Firestore:", taskData);
+      await addDoc(collection(db, 'tasks'), taskData);
+      setShowModal(false);
+      setForm({ title: '', description: '', task_type: 'water', urgency_level: 'high', urgency_score: 7, location_name: '', quantity: '' });
+      alert("✅ Task created successfully!");
+    } catch (error) {
+      console.error("Firestore Error:", error);
+      alert(`❌ Failed to create task: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function updateStatus(taskId, newStatus) {
@@ -99,7 +116,7 @@ export default function TaskBoard() {
           <h2 className="page-title">✅ Task Board</h2>
           <p className="page-subtitle">{tasks.length} total tasks · {tasks.filter(t => t.status === 'pending').length} pending</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Create Task</button>
+        <button className="btn btn-primary" onClick={() => { console.log("Create Task clicked"); setShowModal(true); }}>+ Create Task</button>
       </div>
 
       {/* Filters */}
@@ -310,7 +327,7 @@ export default function TaskBoard() {
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={createTask} disabled={saving || !form.title}>
+                <button className="btn btn-primary" onClick={createTask}>
                   {saving ? '⏳ Saving...' : '✅ Create Task'}
                 </button>
               </div>

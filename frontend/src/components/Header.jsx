@@ -1,7 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Header({ title, subtitle, userRole, sosAlerts, inventoryAlerts, hopeLatest, setCurrentPage }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const sosRef = useRef(null);
+  const alertsRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (activeDropdown === 'sos' && sosRef.current && !sosRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+      if (activeDropdown === 'alerts' && alertsRef.current && !alertsRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   const totalAIAlerts = inventoryAlerts.length + (hopeLatest && hopeLatest.score < 3.0 ? 1 : 0);
 
@@ -14,7 +29,7 @@ export default function Header({ title, subtitle, userRole, sosAlerts, inventory
       
       <div className="header-actions">
         {/* SOS Notifications */}
-        <div className="notification-container">
+        <div className="notification-container" ref={sosRef}>
           <button 
             className={`notification-btn ${activeDropdown === 'sos' ? 'active' : ''}`}
             onClick={() => setActiveDropdown(activeDropdown === 'sos' ? null : 'sos')}
@@ -55,7 +70,7 @@ export default function Header({ title, subtitle, userRole, sosAlerts, inventory
         </div>
 
         {/* AI Critical Alerts */}
-        <div className="notification-container">
+        <div className="notification-container" ref={alertsRef}>
           <button 
             className={`notification-btn ${activeDropdown === 'alerts' ? 'active' : ''}`}
             onClick={() => setActiveDropdown(activeDropdown === 'alerts' ? null : 'alerts')}
