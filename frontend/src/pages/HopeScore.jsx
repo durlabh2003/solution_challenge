@@ -38,7 +38,8 @@ export default function HopeScore() {
   async function logScore() {
     setSaving(true);
     try {
-      const response = await fetch('/api/guardian', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/guardian`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)

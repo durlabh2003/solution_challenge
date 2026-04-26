@@ -91,7 +91,8 @@ export default function FieldReports({ userRole }) {
     setVisionResult(null);
 
     try {
-      const response = await fetch('/api/reports', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -163,7 +164,8 @@ export default function FieldReports({ userRole }) {
 
     try {
       const base64Images = selectedImages.map(img => img.base64);
-      const response = await fetch('/api/vision', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/vision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

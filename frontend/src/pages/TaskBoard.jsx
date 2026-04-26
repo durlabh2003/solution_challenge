@@ -64,7 +64,8 @@ export default function TaskBoard() {
   async function autoDispatchTask(taskId) {
     setSaving(true);
     try {
-      const response = await fetch('/api/dispatch', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/dispatch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task_id: taskId })

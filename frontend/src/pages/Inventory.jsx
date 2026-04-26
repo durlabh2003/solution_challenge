@@ -150,7 +150,8 @@ export default function Inventory() {
   useEffect(() => {
     async function fetchSentinel() {
       try {
-        const response = await fetch('/api/sentinel');
+        const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+        const response = await fetch(`${apiBase}/api/sentinel`);
         const data = await response.json();
         if (data.status === 'success') {
           setApiAlerts(data.alerts || []);

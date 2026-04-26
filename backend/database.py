@@ -7,26 +7,31 @@ _db = None
 def get_db():
     global _db
     if _db is None:
-        if not firebase_admin._apps:
-            # Check if the service account key exists (for local development)
-            cred_path = os.path.join(os.path.dirname(__file__), "firebase-adminsdk.json")
-            try:
-                if os.path.exists(cred_path):
+        try:
+            # Try to initialize with Environment Variable (JSON string) first
+            service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+            if service_account_json:
+                import json
+                cred_dict = json.loads(service_account_json)
+                cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred)
+                print("Initialized Firebase with Service Account from ENV.")
+            else:
+                # Fallback to Application Default Credentials or local file
+                try:
+                    firebase_admin.initialize_app()
+                    print("Initialized Firebase with Application Default Credentials.")
+                except Exception:
+                    # Last resort for local testing
+                    cred_path = os.path.join(os.path.dirname(__file__), "firebase-adminsdk.json")
                     cred = credentials.Certificate(cred_path)
                     firebase_admin.initialize_app(cred)
-                else:
-                    # Use Application Default Credentials (for Cloud deployment)
-                    firebase_admin.initialize_app()
-            except Exception as e:
-                print(f"Error initializing Firebase Admin SDK: {e}")
-                # During deployment discovery, we might not have credentials
-                return None
-        
-        try:
+                    print("Initialized Firebase with local firebase-adminsdk.json.")
+            
             _db = firestore.client()
         except Exception as e:
-            print(f"Warning: Could not initialize Firestore client: {e}")
-            return None
+            print(f"Error initializing Firebase: {e}")
+            raise e
     return _db
 
 # Proxy object or just use get_db() in agents.
